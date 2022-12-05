@@ -3,8 +3,9 @@ import csv
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from geopy.geocoders import Nominatim
 
-data_headers = ['Document id','Latitude', 'Longitude', 'Image link', 'Meter ID', 'Time of installation', 'Sim inside Meter']
+data_headers = ['Document id','Latitude', 'Longitude', 'Image link', 'Meter ID', 'Time of installation', 'Sim inside Meter', 'Location']
 # Use the private key file of the service account directly.
 cred = credentials.Certificate(r"C:\Users\HP\Downloads\Documents\Python firebase serl meters details\bloom-meter-installers-app-firebase-adminsdk-kxzqu-88acae3623.json")
 app = firebase_admin.initialize_app(cred)
@@ -12,6 +13,7 @@ firestore_client = firestore.client()
 # Read all files/documents in the db
 coll_ref = firestore_client.collection('serl_meters')
 docs = coll_ref.stream()
+
 
 data_list = []
 data_values = []
@@ -29,7 +31,13 @@ for doc in docs:
     latitude = latitude[1]
     longitude = longitude[1]
 
-    doc_value_list = [ doc.id, latitude, longitude , doc.to_dict()['Image link'], doc.to_dict()['Meter ID'], doc.to_dict()['Time of installation'], doc.to_dict()['Sim inside Meter'] ]
+
+    #initialize nominatim API
+    geolocator = Nominatim(user_agent = 'geoapiExercises')
+    location = geolocator.geocode(latitude + "," + longitude)
+
+
+    doc_value_list = [ doc.id, latitude, longitude , doc.to_dict()['Image link'], doc.to_dict()['Meter ID'], doc.to_dict()['Time of installation'], doc.to_dict()['Sim inside Meter'], location ]
 
     with open('serl_meters_installation_data.csv', mode='a') as serl_meters_installation_data:
         serl_meters_installation_data_writer = csv.writer(serl_meters_installation_data, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
